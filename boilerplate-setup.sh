@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # Borrowed a lot from https://github.com/mirego/elixir-boilerplate
 
@@ -9,6 +9,14 @@
 pascalCaseBefore="ShopifyApp"
 snakeCaseBefore="shopify_app"
 kebabCaseBefore="shopify-app"
+
+SED=$(which sed)
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	SED_CMD="$SED -i ''"
+else
+	SED_CMD="$SED -i"
+fi
 
 # The identifiers above will be replaced in the content of the files found below
 content=$(find . -type f \( \
@@ -30,13 +38,15 @@ content=$(find . -type f \( \
 )
 
 # The identifiers above will be replaced in the path of the files and directories found here
-paths=$(find . -depth 2 \( \
+paths=$(find . \( \
   -path "./lib/${snakeCaseBefore}*" -or \
   -path "./lib/${snakeCaseBefore}_*" -or \
   -path "./lib/${snakeCaseBefore}.*" -or \
   -path "./test/${snakeCaseBefore}" -or \
   -path "./test/${snakeCaseBefore}_*" \
 \))
+
+echo $paths
 
 # -----------------------------------------------------------------------------
 # Validation
@@ -48,7 +58,7 @@ if [[ -z "$1" ]] ; then
 fi
 
 pascalCaseAfter=$1
-snakeCaseAfter=$(echo $pascalCaseAfter | /usr/bin/sed 's/\(.\)\([A-Z]\)/\1_\2/g' | tr '[:upper:]' '[:lower:]')
+snakeCaseAfter=$(echo $pascalCaseAfter | $SED 's/\(.\)\([A-Z]\)/\1_\2/g' | tr '[:upper:]' '[:lower:]')
 kebabCaseAfter=$(echo $snakeCaseAfter | tr '_' '-')
 
 # -----------------------------------------------------------------------------
@@ -80,20 +90,20 @@ echo ""
 
 header "Replacing boilerplate identifiers in content"
 for file in $content; do
-  run /usr/bin/sed -i "''" "s/$snakeCaseBefore/$snakeCaseAfter/g" $file
-  run /usr/bin/sed -i "''" "s/$kebabCaseBefore/$kebabCaseAfter/g" $file
-  run /usr/bin/sed -i "''" "s/$pascalCaseBefore/$pascalCaseAfter/g" $file
+  run $SED_CMD "s/$snakeCaseBefore/$snakeCaseAfter/g" $file
+  run $SED_CMD "s/$kebabCaseBefore/$kebabCaseAfter/g" $file
+  run $SED_CMD "s/$pascalCaseBefore/$pascalCaseAfter/g" $file
 done
 success "Done!\n"
 
 header "Replacing boilerplate identifiers in file and directory paths"
 for path in $paths; do
-  run mv $path $(echo $path | /usr/bin/sed "s/$snakeCaseBefore/$snakeCaseAfter/g" | /usr/bin/sed "s/$kebabCaseBefore/$kebabCaseAfter/g" | /usr/bin/sed "s/$pascalCaseBefore/$pascalCaseAfter/g")
+  run mv $path $(echo $path | $SED "s/$snakeCaseBefore/$snakeCaseAfter/g" | $SED "s/$kebabCaseBefore/$kebabCaseAfter/g" | $SED "s/$pascalCaseBefore/$pascalCaseAfter/g")
 done
 success "Done!\n"
 
 header "Updating Shopify initializers"
-run /usr/bin/sed -i "''" "s/$snakeCaseBefore/$snakeCaseAfter/g" lib/$snakeCaseAfter/shopify_api/initializer.ex
+run $SED_CMD "s/$snakeCaseBefore/$snakeCaseAfter/g" lib/$snakeCaseAfter/shopify_api/initializer.ex
 success "Done!\n"
 
 header "Importing project README.md"
